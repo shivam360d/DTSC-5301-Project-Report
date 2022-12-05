@@ -14,7 +14,7 @@
 # date_first_booking: date of first booking
 # gender
 # age
-# signup_method - Platform used for singup
+# signup_method - Platform used for signup
 # signup_flow: the page a user came to signup up from
 # language: international language preference
 # affiliate_channel: what kind of paid marketing
