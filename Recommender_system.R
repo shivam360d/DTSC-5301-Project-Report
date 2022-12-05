@@ -1,23 +1,45 @@
+#Question of Interest: What features reflect some pattern that would be useful
+# to target relevant audience, so that the customer engagement can be increased.
+
+# Data:
+# Source: Data is taken from Kaggle: https://www.kaggle.com/competitions/airbnb-recruiting-new-user-bookings/data
+
+# Dataset is a collection of users along with their demographics, web session 
+# records, and some summary statistics. All the users in this dataset are from 
+# the USA.
+
+# id: user id
+# date_account_created: the date of account creation
+# timestamp_first_active: timestamp of the first activity, note that it can be earlier than??date_account_created or date_first_booking because a user can search before signing up
+# date_first_booking: date of first booking
+# gender
+# age
+# signup_method - Platform used for singup
+# signup_flow: the page a user came to signup up from
+# language: international language preference
+# affiliate_channel: what kind of paid marketing
+# affiliate_provider: where the marketing is e.g. google, craigslist, other
+# first_affiliate_tracked: whats the first marketing the user interacted with before the signing up
+# signup_app
+# first_device_type
+# first_browser
+# country_destination
+
 # Importing data
-
-data <-read.csv("~/Downloads/train_users_2.csv")
-
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(gridExtra)
+data <-read.csv("A://Data Science as a Field//DTSC-5301-Project-Report//train_users_2.csv")
 head(data, n = 15)
 
 # Checking dimensions of data
-
 dim(data)
 
-# Check if data frame is NULL
-
-is.null(data)
-
+# dropping id and timestamp related features
 data <- data[,-(1:4), drop= FALSE]
 
-head(data)
-
 # Checking Column wise null values
-
 colSums(is.na(data))
 
 #Inferences: Here colSums functions only detects values which are marked as NA values 
@@ -29,143 +51,129 @@ str(data)
 # Checking summary of data
 summary(data)
 
-# Univariate analysis
-
-# Checking column gender
-
-str(data$gender)
-
-# Checking missing values in column gender
-
-summary(data$gender)
-
-# Plotting barplot for different levels of column gender in data
-
-# barplot((data$gender))
-
+# Distribution of Gender
 ggplot(data, aes(x=gender)) +
-  geom_bar()
+  geom_bar(aes(fill=gender))
 
-# Column Age
-# Checking column age
+# Checking % missing values in column age
+sum(is.na(data$age))*100/dim(data)[1]
 
-str(data$age)
-
-# Checking missing values in column age
-
+# Checking summary statistics of age
 summary(data$age)
 
-# Checking value distribution of column age
+# From the above statistics, we can see that the maximum value of age is 2014.
+# Hence, we shall remove outliers/errors while analyzing the same
 
-hist(data$age)
+# Removing outliers in age
+age_filtered = data %>% filter(age <= IQR(age,na.rm = TRUE)*1.5 + 50)
 
-# Inferences: In column age we have some bad values which shows age greater than 1000 years. 
-# Hence, replacing null values and bad data with median values.
+# Distribution of age with respect to gender
+plt1 = ggplot(age_filtered,aes(x=age,na.rm=TRUE))+
+  stat_density(aes(fill=gender))+
+  ggtitle("Distribution of Age with respect to Gender")+
+  theme(plot.title = element_text(hjust=0.5))
 
-# Imputing missing values with median values
+# Possible values in Signup method
+unique(data$signup_method)
 
-data$age[is.na(data$age)] <- median(data$age,na.rm = TRUE)
-
-# Checking summary of age column
-summary(data$age)
-
-# Replacing values above 150 years to median value of column age
-
-data$age[data$age > 150] <- median(data$age,na.rm = TRUE)
-
-# Checking value distribution of column age
-hist(data$age)
-
-# Checking column signup_method
-str(data$signup_method)
-
-# Checking missing values in column signup_method
-
-summary(data$signup_method)
-
-# Plotting barplot for different levels of column signup_method in data
-
-# barplot(summary(data$signup_method))
-
+# Distribution of Signup method
 ggplot(data, aes(x=signup_method)) +
-  geom_bar()
+  geom_bar(aes(fill=signup_method))
 
-# Column - language
-# Checking column language
+# Distribution of age with respect to signup_method
+plt2 = ggplot(age_filtered,aes(x=age,na.rm=TRUE))+
+  stat_density(aes(fill=signup_method))+
+  scale_fill_brewer(palette="Dark2")+
+  ggtitle("Distribution of Age with respect to Signup-method")+
+  theme(plot.title = element_text(hjust=0.5))
 
-str(data$language)
+grid.arrange(plt1,plt2,nrow=2,ncol=1)
 
-# Checking summary of language column
-summary(data$language)
+# Column
+unique(data$language)
 
-# Plotting barplot for different levels of column language in data
-
-# barplot(summary(data$language))
+# Distribution of Languages
 ggplot(data, aes(x=language)) +
   geom_bar()
 
+#From the above bar plot, we can infer that the most of the data is for a single
+#language, that is English
+
 # Checking column affiliate_channel
-
-str(data$affiliate_channel)
-
-# Checking summary of affiliate_channel column
-summary(data$affiliate_channel)
-
-# Plotting barplot for different levels of column affiliate_channel in data
-
-# barplot(summary(data$affiliate_channel))
-
-ggplot(data, aes(x=affiliate_channel)) +
-  geom_bar()
+unique(data$affiliate_channel)
 
 # Checking column affiliate_provider
+unique(data$affiliate_provider)
 
-str(data$affiliate_provider)
+#Distribution affiliate_channel
+plt1= ggplot(data, aes(x=affiliate_channel)) +
+  geom_bar(aes(fill=signup_method),color='black',position="dodge")+
+  ggtitle("Distribution of Channel with respect to SignUp method")+
+  ylab("Count")+
+  xlab("Affiliate Channel")+
+  theme(plot.title = element_text(hjust=0.5))
 
-# Checking summary of affiliate_provider column
-summary(data$affiliate_provider)
+#Distribution affiliate_provider
+plt2 = ggplot(data, aes(x=affiliate_provider)) +
+  geom_bar(aes(fill=signup_method),color='black',position="dodge")+
+  ggtitle("Distribution of Provider with respect to SignUp method")+
+  ylab("Count")+
+  xlab("Affiliate Provider")+
+  theme(plot.title = element_text(hjust=0.5),axis.text.x = element_text(angle=30,vjust=0.8))
 
-# Plotting barplot for different levels of column affiliate_provider in data
-
-# barplot(summary(data$affiliate_provider))
-
-ggplot(data, aes(x=affiliate_provider)) +
-  geom_bar()
-
+grid.arrange(plt1,plt2,nrow=2,ncol=1)
 
 # Column - first_affiliate_tracked
 # Checking column first_affiliate_tracked
 
-str(data$first_affiliate_tracked)
-
-# Checking summary of first_affiliate_tracked column
-summary(data$first_affiliate_tracked)
+unique(data$first_affiliate_tracked)
 
 # Plotting barplot for different levels of column first_affiliate_tracked in data
-# barplot(summary(data$first_affiliate_tracked))
+plt1 = data %>% 
+  filter(first_affiliate_tracked != "") %>% 
+  ggplot(aes(x=first_affiliate_tracked)) +
+  geom_bar(aes(fill=signup_method))+
+  ggtitle("First marketing user interacted before SignUp")+
+  ylab("Count")+
+  xlab("First Affiliate")+
+  theme(plot.title = element_text(hjust=0.5))
 
-ggplot(data, aes(x=first_affiliate_tracked)) +
-  geom_bar()
-
-# Column - signup_app
 # Checking column signup_app
+unique(data$signup_app)
 
-str(data$signup_app)
+# Plotting barplot for different levels of sign_up in data
+plt2 = ggplot(data=data,aes(x=signup_app)) +
+  geom_bar(aes(fill=signup_method))+
+  ggtitle("Application used for signup")+
+  ylab("Count")+
+  xlab("Application type")+
+  theme(plot.title = element_text(hjust=0.5))
 
-# Checking summary of signup_app column
-summary(data$signup_app)
+grid.arrange
 
-# Plotting barplot for different levels of column signup_app in data
+# CHI Squared Analysis to determine the dependency of categorical variables
 
-# barplot(summary(data$signup_app))
+# Hypothesis test
+# Significance Level: 0.05
+# Ho: There is no relation between method used to signup and the type of app
+# Ha: There is some relation between method used to signup and the type of app
 
-ggplot(data, aes(x=signup_app)) +
-  geom_bar()
+data$signup_method = factor(data$signup_method)
+data$signup_app = factor(data$signup_app)
+
+contigency_table = table(data$signup_method,data$signup_app)
+chisq.test(contigency_table)
+
+# Here, p-value is 2.2e-16, that is lower than the significance level. Hence we
+# can reject the null hypothesis and infer that there is some relation between
+# signup_app and signup_method
+
+# ===============================================================================
 
 # Column - first_device_type
 # Checking column first_device_type
 
-str(data$first_device_type)
+unique(data$first_device_type)
 
 # Checking summary of first_device_type column
 
