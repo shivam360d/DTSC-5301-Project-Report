@@ -153,7 +153,13 @@ ggplot(data, aes(x=language)) +
   geom_bar()
 
 ```
+<br>
 
+#### Bias and its cause
+
+From the above distribution, we can observe that the dataset's language feature is biased towards a single language. The possible source of this bias shall be because of the users' database. Since all the users in the database are from the United States(as mentioned in source of the data), language is highly skewed towards English.
+
+<br>
 ```{r}
 #From the above bar plot, we can infer that the most of the data is for a single
 #language, that is English
