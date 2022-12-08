@@ -1,0 +1,328 @@
+---
+title: "Recommender_System"
+author:
+  - SHIVAM VATS
+  - SUSHIL DEORE
+  - ANSH SACHDEVA
+output: word_document
+date: "2022-12-07"
+---
+
+#### Question of Interest
+
+What features reflect some pattern that would be usefulto target relevant audience, so that the customer engagement can be increased.
+
+#### Data:
+##### Source: Data is taken from Kaggle: https://www.kaggle.com/competitions/airbnb-recruiting-new-user-bookings/data
+
+Dataset is a collection of users along with their demographics, web session  records, and some summary statistics. All the users in this dataset are from the USA. Here is a short description of the features of data:
+
+1. id: user id
+2. date_account_created: the date of account creation
+3. timestamp_first_active: timestamp of the first activity, note that it can be earlier than date_account_created or date_first_booking because a user can search before signing up
+4. date_first_booking: date of first booking
+5. gender
+6. age
+7. signup_method - Platform used for signup
+8. signup_flow: the page a user came to signup up from
+9. language: international language preference
+10. affiliate_channel: what kind of paid marketing
+11. affiliate_provider: where the marketing is e.g. google, craigslist, other
+12. first_affiliate_tracked: whats the first marketing the user interacted with before the signing up
+13. signup_app
+14. first_device_type
+15. first_browser
+16. country_destination
+
+<br>
+
+### Analysis
+
+```{r include=FALSE}
+# Importing data
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(gridExtra)
+```
+<br>
+Importing data and checking its result
+<br>
+```{r importing-data}
+data <-read.csv("Airbnb New User Bookings.csv")
+print(head(data, n = 15))
+# Checking dimensions of data
+dim(data)
+```
+<br>
+Dropping columns of related to timestamps since it is not relevant and useful in this scenario. 
+<br>
+```{r}
+# dropping id and timestamp related features
+data <- data[,-(1:4), drop= FALSE]
+```
+<br>
+Checking for null values
+<br>
+```{r}
+# Checking Column wise null values
+colSums(is.na(data))
+```
+
+```{r}
+# Checking structure of data
+str(data)
+
+# Checking summary of data
+summary(data)
+
+```
+<br>
+Distribution of Gender
+<br>
+
+```{r}
+# Distribution of Gender
+ggplot(data, aes(x=gender)) +
+  geom_bar(aes(fill=gender))
+```
+<br>
+% missing values in age
+<br>
+```{r}
+# Checking % missing values in column age
+sum(is.na(data$age))*100/dim(data)[1]
+
+```
+<br>
+Summary Statistics of Age
+<br>
+```{r}
+# Checking summary statistics of age
+summary(data$age)
+```
+<br>
+From the above statistics, we can see that the maximum value of age is 2014. Hence, we shall remove outliers/errors while analyzing the same
+<br>
+```{r}
+# Removing outliers in age
+age_filtered = data %>% filter(age <= IQR(age,na.rm = TRUE)*1.5 + 50)
+```
+<br>
+Distribution of age with respect to gender
+<br>
+```{r}
+plt1 = ggplot(age_filtered,aes(x=age,na.rm=TRUE))+
+  stat_density(aes(fill=gender))+
+  ggtitle("Distribution of Age with respect to Gender")+
+  theme(plot.title = element_text(hjust=0.5))
+```
+
+```{r}
+# Possible values in Signup method
+unique(data$signup_method)
+
+```
+<br>
+Distribution of Signup method
+<br>
+```{r}
+ggplot(data, aes(x=signup_method)) +
+  geom_bar(aes(fill=signup_method))
+```
+<br>
+Distribution of age with respect to signup_method
+<br>
+```{r}
+plt2 = ggplot(age_filtered,aes(x=age,na.rm=TRUE))+
+  stat_density(aes(fill=signup_method))+
+  scale_fill_brewer(palette="Dark2")+
+  ggtitle("Distribution of Age with respect to Signup-method")+
+  theme(plot.title = element_text(hjust=0.5))
+grid.arrange(plt1,plt2,nrow=2,ncol=1)
+```
+
+```{r}
+# Column
+unique(data$language)
+```
+
+```{r}
+# Distribution of Languages
+ggplot(data, aes(x=language)) +
+  geom_bar()
+
+```
+
+```{r}
+#From the above bar plot, we can infer that the most of the data is for a single
+#language, that is English
+
+# Checking column affiliate_channel
+unique(data$affiliate_channel)
+
+# Checking column affiliate_provider
+unique(data$affiliate_provider)
+```
+<br>
+Distribution affiliate_channel
+<br>
+```{r}
+#Distribution affiliate_channel
+plt1= ggplot(data, aes(x=affiliate_channel)) +
+  geom_bar(aes(fill=signup_method),color='black',position="dodge")+
+  ggtitle("Distribution of Channel with respect to SignUp method")+
+  ylab("Count")+
+  xlab("Affiliate Channel")+
+  theme(plot.title = element_text(hjust=0.5))
+```
+<br>
+Distribution affiliate_provider
+<br>
+```{r}
+#Distribution affiliate_provider
+plt2 = ggplot(data, aes(x=affiliate_provider)) +
+  geom_bar(aes(fill=signup_method),color='black',position="dodge")+
+  ggtitle("Distribution of Provider with respect to SignUp method")+
+  ylab("Count")+
+  xlab("Affiliate Provider")+
+  theme(plot.title = element_text(hjust=0.5),axis.text.x = element_text(angle=30,vjust=0.8))
+
+grid.arrange(plt1,plt2,nrow=2,ncol=1)
+```
+
+```{r}
+# Column - first_affiliate_tracked
+# Checking column first_affiliate_tracked
+
+unique(data$first_affiliate_tracked)
+
+# Plotting barplot for different levels of column first_affiliate_tracked in data
+plt1 = data %>% 
+  filter(first_affiliate_tracked != "") %>% 
+  ggplot(aes(x=first_affiliate_tracked)) +
+  geom_bar(aes(fill=signup_method))+
+  ggtitle("First marketing user interacted before SignUp")+
+  ylab("Count")+
+  xlab("First Affiliate")+
+  theme(plot.title = element_text(hjust=0.5))
+```
+
+```{r}
+# Checking column signup_app
+unique(data$signup_app)
+
+# Plotting barplot for different levels of sign_up in data
+plt2 = ggplot(data=data,aes(x=signup_app)) +
+  geom_bar(aes(fill=signup_method))+
+  ggtitle("Application used for signup")+
+  ylab("Count")+
+  xlab("Application type")+
+  theme(plot.title = element_text(hjust=0.5))
+grid.arrange(plt1,plt2,nrow=2,ncol=1)
+```
+<br>
+### CHI Squared Analysis 
+
+Here we have performed an analysis to determine the nature dependency of categorical variables on each other. Since most of the features are categorical Chi squared analysis is a good fit. Chi Squared analysis is used to determine if two or more categorical features are related to each other. In this analysis, we perform a hypothesis test. If the p-value of the hypothesis test is less than 0.05, then we reject our Null hypothesis, otherwise, we cannot reject it.
+
+#### Null Hypothesis: 
+There is no relation between method used to signup and the type of app
+<br>
+#### Alternate Hypothesis: 
+There is some relation between method used to signup and the type of app
+<br>
+#### Significance Level: 0.05
+<br>
+```{r}
+data$signup_method = factor(data$signup_method)
+data$signup_app = factor(data$signup_app)
+
+contigency_table = table(data$signup_method,data$signup_app)
+chisq.test(contigency_table)
+```
+<br>
+Here, p-value is 2.2e-16, which is lower than 0.05 (significance level). Hence we can reject the null hypothesis and infer that there is some relation between the features signup_app and signup_method.
+<br>
+
+
+<br>
+Distribution of feature first_browser
+<br>
+```{r}
+# Checking column first_browser
+str(data$first_browser)
+
+# Checking summary of first_browser column
+summary(data$first_browser)
+
+# Plotting barplot for different levels of column first_browser in data
+ggplot(data, aes(x=first_browser)) +
+  geom_bar()
+
+```
+<br>
+Distribution of destination country
+<br>
+```{r}
+# Checking column country_destination
+str(data$country_destination)
+
+# Checking summary of country_destination column
+summary(data$country_destination)
+
+# Plotting barplot for different levels of column country_destination in data
+ggplot(data, aes(x=country_destination)) +
+  geom_bar()
+```
+
+<br>
+Bi-variate analysis of features
+<br>
+
+```{r}
+# Defining function for two categorical column visualization
+bivariate <- function(arg_1, arg_2) {
+  count <- table(arg_1, arg_2)
+  barplot(count,beside = TRUE,legend.text = TRUE)
+}
+```
+
+<br>
+Gender vs. Country Destination
+<br>
+
+```{r}
+# Plotting two categorical columns
+bivariate(data$gender, data$country_destination)
+```
+
+<br>
+Signup method vs. Country Destination
+<br>
+
+```{r}
+# Plotting two categorical columns
+bivariate(data$signup_method, data$country_destination)
+
+```
+
+<br>
+Signup_flow vs Country Destination
+<br>
+
+```{r}
+# Plotting two categorical columns
+bivariate(data$signup_flow, data$country_destination)
+
+```
+
+
+### CONCLUSION 
+
+Because we now know who to target and what kind of hotel is best for the users, our analysis helped us learn more about the demographic makeup of the users and their appropriate choices when they make a reservation on Airbnb. Our system will be able to distribute more personalized material within the community to be more predictive, reduce the average time towards first booking, and better forecast demand by accurately predicting where a new user will book their first hotel experience.
+
+##### Github Link - https://github.com/shivam360d/DTSC-5301-Project-Report
+##### By - Shivam Vats, Sushil Deore and Ansh Sachdeva 
+
+
